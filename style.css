@@ -15,21 +15,65 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--texto); }
+html { height: 100%; height: -webkit-fill-available; }
+body {
+  height: 100%;
+  height: -webkit-fill-available;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--texto);
+}
 
 /* ---- Layout principal ---- */
-#app { display: flex; flex-direction: column; height: 100%; }
-#topbar { flex-shrink: 0; background: var(--azul); height: var(--topbar); display: flex; align-items: center; padding: 0 16px; gap: 10px; }
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: -webkit-fill-available;
+}
+#topbar {
+  flex-shrink: 0;
+  background: var(--azul);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  /* Altura base + safe area do topo (notch/Dynamic Island) */
+  padding-top: env(safe-area-inset-top);
+  height: calc(var(--topbar) + env(safe-area-inset-top));
+}
 #topbar .avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.2); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 #topbar .nome { font-size: 14px; font-weight: 600; color: #fff; flex: 1; }
 #topbar .mes-nav { display: flex; align-items: center; gap: 8px; }
-#topbar .btn-mes { background: rgba(255,255,255,.18); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#topbar .btn-mes { background: rgba(255,255,255,.18); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 #topbar .mes-label { font-size: 13px; font-weight: 700; color: var(--amarelo); min-width: 100px; text-align: center; }
-#main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-#tabbar { flex-shrink: 0; background: var(--bg-card); border-top: 0.5px solid var(--borda); height: var(--tabbar); display: flex; padding-bottom: env(safe-area-inset-bottom); }
-.tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; border: none; background: none; }
-.tab svg { width: 24px; height: 24px; stroke: var(--muted); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s; }
-.tab span { font-size: 10px; color: var(--muted); transition: color .15s; }
+#main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
+#tabbar {
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border-top: 0.5px solid var(--borda);
+  display: flex;
+  /* Safe area do home indicator */
+  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(var(--tabbar) + env(safe-area-inset-bottom));
+}
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding-bottom: 2px;
+  /* Área de toque mínima de 44px */
+  min-height: 44px;
+}
+.tab svg { width: 26px; height: 26px; stroke: var(--muted); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s; }
+.tab span { font-size: 11px; color: var(--muted); transition: color .15s; }
 .tab.ativo svg { stroke: var(--azul); }
 .tab.ativo span { color: var(--azul); font-weight: 600; }
 
@@ -85,12 +129,14 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .campo label { font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; }
 .campo input[type="email"],
 .campo input[type="password"],
+.campo input[type="text"],
 .campo input[type="date"],
 .campo select {
   width: 100%; padding: 12px 14px; border: 1px solid var(--borda);
   border-radius: 10px; font-size: 15px; background: var(--bg);
   color: var(--texto); outline: none; transition: border-color .15s;
   appearance: none; -webkit-appearance: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 .campo input:focus, .campo select:focus { border-color: var(--azul); }
 .login-erro { color: #b02020; font-size: 13px; text-align: center; min-height: 18px; margin-bottom: 10px; }
@@ -103,7 +149,8 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 
 /* Toggle de senha */
 .senha-wrap { position: relative; }
-.senha-wrap input { padding-right: 44px; }
+.senha-wrap input[type="password"],
+.senha-wrap input[type="text"] { padding-right: 44px; }
 .btn-olho {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   background: none; border: none; cursor: pointer; color: var(--muted);
@@ -173,7 +220,21 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .ev-vazio .icon { font-size: 28px; margin-bottom: 8px; }
 
 /* ---- FAB ---- */
-#fab { position: fixed; bottom: calc(var(--tabbar) + 16px + env(safe-area-inset-bottom)); right: 20px; width: 52px; height: 52px; border-radius: 50%; background: var(--amarelo); border: none; cursor: pointer; font-size: 26px; font-weight: 300; color: var(--azul); box-shadow: 0 4px 14px rgba(0,0,0,.2); display: flex; align-items: center; justify-content: center; z-index: 100; transition: transform .15s; }
+#fab {
+  position: fixed;
+  bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 16px);
+  right: 20px;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--amarelo);
+  border: none; cursor: pointer;
+  font-size: 28px; font-weight: 300;
+  color: var(--azul);
+  box-shadow: 0 4px 14px rgba(0,0,0,.2);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  transition: transform .15s;
+}
 #fab:active { transform: scale(.93); }
 #fab.oculto { display: none; }
 
@@ -257,4 +318,3 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 img, svg { max-width: 100%; height: auto; }
 .cards-scroll { padding-right: 16px; }
 .ev-nome, .reg-nome, .proj-card .nome { max-width: 55vw; }
-
