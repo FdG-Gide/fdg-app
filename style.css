@@ -54,7 +54,7 @@ body {
   background: var(--bg-card);
   border-top: 0.5px solid var(--borda);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   /* Safe area do home indicator */
   padding-bottom: env(safe-area-inset-bottom);
   height: calc(var(--tabbar) + env(safe-area-inset-bottom));
@@ -69,11 +69,9 @@ body {
   cursor: pointer;
   border: none;
   background: none;
-  padding: 0;
+  padding: 0 0 2px 0;
   /* Área de toque mínima de 44px */
   min-height: 44px;
-  /* Compensa o padding-bottom da safe area para centralizar visualmente */
-  margin-bottom: env(safe-area-inset-bottom);
 }
 .tab svg { width: 26px; height: 26px; stroke: var(--muted); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s; }
 .tab span { font-size: 11px; color: var(--muted); transition: color .15s; }
