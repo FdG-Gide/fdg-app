@@ -3,6 +3,7 @@
 // https://script.google.com/macros/s/AKfycby0U2F1mBS7SogjsHvAcvFwHZD2Ni3Nl8Hw_NIoVw0VStgwDqQ50YvKAj8MYjclfkgH/exec
 // ============================================================
 
+
 // ---- CONFIGURAÇÃO ----
 // Substitua pela URL do seu Web App do Google Apps Script
 const API_URL = 'https://script.google.com/macros/s/AKfycby0U2F1mBS7SogjsHvAcvFwHZD2Ni3Nl8Hw_NIoVw0VStgwDqQ50YvKAj8MYjclfkgH/exec';
@@ -99,23 +100,46 @@ function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function toggleSenha() {
+  const inp  = document.getElementById('senha');
+  const aberto  = document.getElementById('olho-aberto');
+  const fechado = document.getElementById('olho-fechado');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    aberto.style.display  = 'none';
+    fechado.style.display = '';
+  } else {
+    inp.type = 'password';
+    aberto.style.display  = '';
+    fechado.style.display = 'none';
+  }
+}
+
 // ---- SESSÃO ----
 
-function salvarSessao(token, user) {
+function salvarSessao(token, user, lembrar) {
   App.token = token; App.user = user;
-  localStorage.setItem('fdg_token', token);
-  localStorage.setItem('fdg_user', JSON.stringify(user));
+  // Se "lembrar", usa localStorage (persiste). Se não, sessionStorage (some ao fechar).
+  const store = lembrar ? localStorage : sessionStorage;
+  store.setItem('fdg_token', token);
+  store.setItem('fdg_user', JSON.stringify(user));
 }
 
 function carregarSessao() {
-  App.token = localStorage.getItem('fdg_token');
-  try { App.user = JSON.parse(localStorage.getItem('fdg_user') || 'null'); } catch(_) {}
+  // Tenta localStorage primeiro, depois sessionStorage
+  App.token = localStorage.getItem('fdg_token') || sessionStorage.getItem('fdg_token');
+  try {
+    const raw = localStorage.getItem('fdg_user') || sessionStorage.getItem('fdg_user');
+    App.user = raw ? JSON.parse(raw) : null;
+  } catch(_) {}
 }
 
 function limparSessao() {
   App.token = App.user = null;
   localStorage.removeItem('fdg_token');
   localStorage.removeItem('fdg_user');
+  sessionStorage.removeItem('fdg_token');
+  sessionStorage.removeItem('fdg_user');
 }
 
 // ---- LOGIN ----
@@ -129,10 +153,11 @@ function renderLogin() {
 }
 
 async function fazerLogin() {
-  const email = document.getElementById('email').value.trim();
-  const senha = document.getElementById('senha').value;
-  const btn   = document.getElementById('btn-login');
-  const erro  = document.getElementById('login-erro');
+  const email   = document.getElementById('email').value.trim();
+  const senha   = document.getElementById('senha').value;
+  const lembrar = document.getElementById('lembrar')?.checked !== false;
+  const btn     = document.getElementById('btn-login');
+  const erro    = document.getElementById('login-erro');
   erro.textContent = '';
 
   if (!email || !senha) { erro.textContent = 'Preencha email e senha.'; return; }
@@ -142,7 +167,7 @@ async function fazerLogin() {
 
   try {
     const res = await api('login', { body: { email, senha } });
-    salvarSessao(res.token, res.user);
+    salvarSessao(res.token, res.user, lembrar);
     iniciarApp();
   } catch (e) {
     erro.textContent = e.message;
@@ -178,8 +203,12 @@ function navMes(dir) {
   if (App.mes < 1)  { App.mes = 12; App.ano--; }
   App.dados = null; App.diaSel = null;
   atualizarLabels();
-  if (App.tab === 'agenda') carregarMes();
-  if (App.tab === 'registros') carregarMes().then(renderRegistros);
+  if (App.tab === 'agenda') {
+    carregarMes().then(function(d) { if (d) renderAgenda(); });
+  }
+  if (App.tab === 'registros') {
+    carregarMes().then(function(d) { if (d) renderRegistros(); });
+  }
 }
 
 // ---- CARREGAR DADOS ----
