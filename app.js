@@ -300,6 +300,8 @@ async function mudarTab(tab) {
   atualizarFabBadge();
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativo'));
   document.getElementById('tab-' + tab).classList.add('ativo');
+  const actionBar = document.getElementById('cal-action-bar');
+  if (actionBar) actionBar.classList.add('oculto');
 
   if (tab === 'agenda') {
     const d = await carregarMes();
@@ -348,15 +350,9 @@ function renderAgenda() {
     main.appendChild(scrollEl);
   }
 
-  // Barra de ação + FAB acima do calendário
-  const actionBar = document.createElement('div');
-  actionBar.id = 'cal-action-bar';
-  actionBar.innerHTML = `<span id="cal-action-hint">Selecione o(s) dia(s) e clique em +</span>`;
-  const fabEl = document.getElementById('fab');
-  actionBar.appendChild(fabEl);
-  fabEl.className = '';
-  fabEl.innerHTML = '+ <span id="fab-label">Registrar</span>';
-  main.appendChild(actionBar);
+  // Mostrar barra de ação
+  document.getElementById('cal-action-bar').classList.remove('oculto');
+  atualizarFabBadge();
 
   // Calendário
   const calWrap = document.createElement('div');
@@ -1119,6 +1115,3 @@ function carregarLogoLogin() {
     // Silencioso — o SVG fallback já está visível
   });
 }
-
-
-
