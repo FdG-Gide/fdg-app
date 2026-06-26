@@ -4,7 +4,7 @@
 
 // ---- CONFIGURAÇÃO ----
 // Substitua pela URL do seu Web App do Google Apps Script
-const API_URL = 'https://script.google.com/macros/s/SEU_DEPLOYMENT_ID_AQUI/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxml5mv2iK8RGKQh6D6VX2HpzKSeAmV_OCfM5MNRZo/dev';
 
 // ---- ESTADO GLOBAL ----
 const App = {
