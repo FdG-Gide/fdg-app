@@ -34,19 +34,72 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 .tab.ativo span { color: var(--azul); font-weight: 600; }
 
 /* ---- Tela de login ---- */
-#tela-login { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; padding: 32px 24px; background: var(--bg); }
-#tela-login .logo-area { text-align: center; margin-bottom: 40px; }
-#tela-login .logo-area .circulo { width: 72px; height: 72px; border-radius: 18px; background: var(--azul); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; }
-#tela-login .logo-area .circulo svg { width: 40px; height: 40px; stroke: #fff; fill: none; stroke-width: 1.8; }
-#tela-login h1 { font-size: 22px; font-weight: 700; color: var(--azul); }
-#tela-login p { font-size: 13px; color: var(--muted); margin-top: 4px; }
-#tela-login .form-card { background: var(--bg-card); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 360px; border: 0.5px solid var(--borda); }
-#tela-login label { font-size: 12px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 6px; }
-#tela-login input { width: 100%; padding: 12px 14px; border: 1px solid var(--borda); border-radius: 10px; font-size: 15px; background: var(--bg); color: var(--texto); margin-bottom: 16px; outline: none; transition: border-color .15s; }
-#tela-login input:focus { border-color: var(--azul); }
-#tela-login .btn-login { width: 100%; padding: 14px; background: var(--azul); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
-#tela-login .btn-login:active { opacity: .85; }
-#tela-login .erro { color: #ff3b30; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+#tela-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  background: var(--azul);
+  background-image:
+    radial-gradient(ellipse at 70% 10%, rgba(118,213,255,.18) 0%, transparent 60%),
+    radial-gradient(ellipse at 15% 90%, rgba(67,221,133,.13) 0%, transparent 55%);
+  padding: 24px;
+}
+.login-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 40px 32px 36px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 48px rgba(14,52,84,.35);
+  position: relative;
+  overflow: hidden;
+}
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--amarelo) 0%, var(--verde) 50%, var(--azul-cl) 100%);
+}
+.login-logo {
+  display: block;
+  margin: 0 auto 24px;
+  max-width: 180px;
+  height: auto;
+}
+.login-titulo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--azul);
+  text-align: center;
+  margin-bottom: 4px;
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 24px;
+}
+.campo { margin-bottom: 14px; }
+.campo label { font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; }
+.campo input[type="email"],
+.campo input[type="password"],
+.campo input[type="date"],
+.campo select {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--borda);
+  border-radius: 10px; font-size: 15px; background: var(--bg);
+  color: var(--texto); outline: none; transition: border-color .15s;
+  appearance: none; -webkit-appearance: none;
+}
+.campo input:focus, .campo select:focus { border-color: var(--azul); }
+.login-erro { color: #b02020; font-size: 13px; text-align: center; min-height: 18px; margin-bottom: 10px; }
+.btn-login {
+  width: 100%; padding: 14px; background: var(--azul); color: #fff;
+  border: none; border-radius: 10px; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-login:active { opacity: .85; }
 
 /* ---- Calendário ---- */
 #cal-wrap { background: var(--bg-card); }
@@ -152,3 +205,4 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 /* ---- Loading ---- */
 .loading-overlay { display: flex; align-items: center; justify-content: center; padding: 60px; }
 .spin { width: 28px; height: 28px; border: 3px solid var(--borda); border-top-color: var(--azul); border-radius: 50%; animation: spin .7s linear infinite; }
+
