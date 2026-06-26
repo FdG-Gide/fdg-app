@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,7 +39,19 @@
     </div>
     <div class="campo">
       <label for="senha">Senha</label>
-      <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
+      <div class="senha-wrap">
+        <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="btn-olho" id="btn-olho" onclick="toggleSenha()" aria-label="Mostrar senha">
+          <svg id="olho-aberto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="olho-fechado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="lembrar-row">
+      <label class="lembrar-label">
+        <input type="checkbox" id="lembrar" checked>
+        <span>Lembrar neste dispositivo</span>
+      </label>
     </div>
     <div class="login-erro" id="login-erro"></div>
     <button class="btn-login" id="btn-login" onclick="fazerLogin()">Entrar</button>
