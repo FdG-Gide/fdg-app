@@ -123,6 +123,16 @@ function salvarSessao(token, user, lembrar) {
   const store = lembrar ? localStorage : sessionStorage;
   store.setItem('fdg_token', token);
   store.setItem('fdg_user', JSON.stringify(user));
+  // Salva ou limpa credenciais conforme checkbox
+  if (lembrar) {
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
+    localStorage.setItem('fdg_email', email);
+    localStorage.setItem('fdg_senha', senha);
+  } else {
+    localStorage.removeItem('fdg_email');
+    localStorage.removeItem('fdg_senha');
+  }
 }
 
 function carregarSessao() {
@@ -134,12 +144,26 @@ function carregarSessao() {
   } catch(_) {}
 }
 
+function preencherCamposLogin() {
+  // Preenche email/senha salvos se "lembrar" estava marcado
+  const email = localStorage.getItem('fdg_email');
+  const senha = localStorage.getItem('fdg_senha');
+  if (email) {
+    document.getElementById('email').value = email;
+    document.getElementById('lembrar').checked = true;
+  }
+  if (senha) {
+    document.getElementById('senha').value = senha;
+  }
+}
+
 function limparSessao() {
   App.token = App.user = null;
   localStorage.removeItem('fdg_token');
   localStorage.removeItem('fdg_user');
   sessionStorage.removeItem('fdg_token');
   sessionStorage.removeItem('fdg_user');
+  // Mantém email/senha para facilitar novo login (se estavam salvos, continuam)
 }
 
 // ---- LOGIN ----
@@ -150,6 +174,10 @@ function renderLogin() {
   document.getElementById('email').value = '';
   document.getElementById('senha').value = '';
   document.getElementById('login-erro').textContent = '';
+  // Garante que o botão volta ao estado normal após logout
+  const btn = document.getElementById('btn-login');
+  btn.disabled = false;
+  btn.innerHTML = 'Entrar';
 }
 
 async function fazerLogin() {
@@ -784,10 +812,16 @@ function renderPerfil() {
 }
 
 async function sair() {
+  const btnSair = document.querySelector('.btn-sair');
+  if (btnSair) {
+    btnSair.disabled = true;
+    btnSair.innerHTML = '<span class="spinner-btn"></span> Saindo…';
+  }
   try { await api('logout', { body: {} }); } catch(_) {}
   limparSessao();
   App.dados = null; App.diaSel = null;
   renderLogin();
+  preencherCamposLogin();
 }
 
 // ---- FERIADOS NACIONAIS (cálculo client-side) ----
@@ -842,9 +876,10 @@ window.addEventListener('DOMContentLoaded', () => {
   carregarSessao();
 
   if (App.token && App.user) {
-    api('me').then(() => iniciarApp()).catch(() => { limparSessao(); renderLogin(); });
+    api('me').then(() => iniciarApp()).catch(() => { limparSessao(); renderLogin(); preencherCamposLogin(); });
   } else {
     renderLogin();
+    preencherCamposLogin();
   }
 
   document.getElementById('senha').addEventListener('keydown', e => {
