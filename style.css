@@ -265,9 +265,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px 6px;
+  padding: 6px 12px;
   background: var(--bg);
+  flex-shrink: 0;
 }
+#cal-action-bar.oculto { display: none; }
 #cal-action-hint {
   font-size: 12px;
   color: var(--muted);
