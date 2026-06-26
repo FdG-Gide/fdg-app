@@ -2,7 +2,7 @@
   "name": "FdG Alocação",
   "short_name": "FdG",
   "description": "Agenda e registro de horas — FdG Consultores",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#174e7a",
