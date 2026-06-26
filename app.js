@@ -364,13 +364,8 @@ function renderAgenda() {
   evWrap.id = 'ev-wrap';
   main.appendChild(evWrap);
 
-  // Seleciona hoje se for o mês atual
-  const hoje = new Date();
-  if (hoje.getMonth() + 1 === App.mes && hoje.getFullYear() === App.ano) {
-    selecionarDia(dataStr(hoje));
-  } else {
-    selecionarDia(null);
-  }
+  // Não pré-seleciona nenhum dia — usuário escolhe explicitamente
+  selecionarDia(null);
 }
 
 function renderCalendario() {
@@ -508,7 +503,6 @@ function atualizarFabBadge() {
 
 function selecionarDia(dStr) {
   if (dStr === null) {
-    // Inicialização — sem dia selecionado
     App.diaSel = null;
     App.diasSel = new Set();
     atualizarFabBadge();
@@ -517,10 +511,27 @@ function selecionarDia(dStr) {
     return;
   }
 
+  // Verifica se o dia é elegível para seleção/registro
+  const dt   = parseDateLocal(dStr);
+  const dow  = dt.getDay();
+  const mmdd = dStr.substring(5);
+  const feriados = getFeriadosBR(dt.getFullYear());
+  const feriasSet = new Set((App.dados?.diasFerias || []).map(f => f.data));
+  const ehFds      = dow === 0 || dow === 6;
+  const ehFeriado  = !!feriados[mmdd];
+  const ehFerias   = feriasSet.has(dStr);
+  const foraPrazo  = !mesAindaEditavel(dStr);
+
+  if (ehFds || ehFeriado || foraPrazo) {
+    // Dia inválido para registro — apenas mostra eventos, não seleciona para lote
+    App.diaSel = dStr;
+    renderEventosDia(dStr);
+    return;
+  }
+
   // Toggle: se já está selecionado, deseleciona; senão adiciona
   if (App.diasSel.has(dStr)) {
     App.diasSel.delete(dStr);
-    // diaSel aponta para o mais recente ainda selecionado
     App.diaSel = App.diasSel.size > 0 ? [...App.diasSel].at(-1) : null;
   } else {
     App.diasSel.add(dStr);
@@ -529,7 +540,6 @@ function selecionarDia(dStr) {
 
   atualizarFabBadge();
   atualizarCelsSel();
-  // Painel inferior mostra o dia clicado (ou o último selecionado)
   renderEventosDia(App.diaSel);
 }
 
@@ -926,7 +936,7 @@ function renderRegistros() {
 
   const todos = [
     ...(App.dados.registros  || []).map(r => ({ tipo: 'reg', ...r })),
-    ...(App.dados.encontros  || []).map(e => ({ tipo: 'encontro', ...e })),
+    ...(App.dados.encontros  || []).map(e => ({ ...e, tipo: 'encontro', tipoEnc: e.tipo })),
     ...(App.dados.diasFerias || []).map(f => ({ tipo: 'ferias', data: f.data, obs: f.observacao }))
   ].sort((a, b) => a.data.localeCompare(b.data));
 
@@ -950,16 +960,17 @@ function renderRegistros() {
           <div class="reg-sub">${esc(item.obs || 'Cadastrado pelo Admin')}</div>
         </div>`;
     } else if (item.tipo === 'encontro') {
-      const icone = item.tipo_enc === 'presencial' || item.tipo === 'presencial' ? '✈️' : '💻';
-      const tipoLabel = (item.tipo_enc || item.tipoEncontro || item.tipo) === 'presencial' ? 'Encontro Presencial' : 'Encontro Online';
-      const corFundo  = (item.tipo_enc || item.tipoEncontro || item.tipo) === 'presencial' ? 'rgba(23,78,122,.1)' : 'rgba(67,221,133,.18)';
-      const corTexto  = (item.tipo_enc || item.tipoEncontro || item.tipo) === 'presencial' ? '#174e7a' : '#0d5c36';
+      const ePresencial = item.tipoEnc === 'presencial';
+      const icone     = ePresencial ? '✈️' : '💻';
+      const tipoLabel = ePresencial ? 'Encontro Presencial' : 'Encontro Online';
+      const corFundo  = ePresencial ? 'rgba(23,78,122,.1)' : 'rgba(67,221,133,.18)';
+      const corTexto  = ePresencial ? '#174e7a' : '#0d5c36';
       el.className = 'reg-item';
       el.innerHTML = `
         <div class="reg-data"><span class="dia-num">${diaNum}</span>${diaAbr}</div>
         <div class="reg-info">
-          <div class="reg-nome">${icone} ${tipoLabel}</div>
-          <div class="reg-sub">Cadastrado pelo Admin</div>
+          <div class="reg-nome">${tipoLabel}</div>
+          <div class="reg-sub">${icone} Cadastrado pelo Admin</div>
         </div>
         ${item.horas ? `<span class="reg-badge" style="background:${corFundo};color:${corTexto}">${item.horas}h</span>` : ''}`;
     } else {
