@@ -300,7 +300,6 @@ async function mudarTab(tab) {
   atualizarFabBadge();
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativo'));
   document.getElementById('tab-' + tab).classList.add('ativo');
-  document.getElementById('fab').className = tab === 'agenda' ? '' : 'oculto';
 
   if (tab === 'agenda') {
     const d = await carregarMes();
@@ -348,6 +347,16 @@ function renderAgenda() {
     });
     main.appendChild(scrollEl);
   }
+
+  // Barra de ação + FAB acima do calendário
+  const actionBar = document.createElement('div');
+  actionBar.id = 'cal-action-bar';
+  actionBar.innerHTML = `<span id="cal-action-hint">Selecione o(s) dia(s) e clique em +</span>`;
+  const fabEl = document.getElementById('fab');
+  actionBar.appendChild(fabEl);
+  fabEl.className = '';
+  fabEl.innerHTML = '+ <span id="fab-label">Registrar</span>';
+  main.appendChild(actionBar);
 
   // Calendário
   const calWrap = document.createElement('div');
@@ -493,17 +502,14 @@ function renderCalendario() {
 function atualizarFabBadge() {
   const fab = document.getElementById('fab');
   if (!fab) return;
-  let badge = document.getElementById('fab-badge');
+  // Remove badge antigo se existir
+  const oldBadge = document.getElementById('fab-badge');
+  if (oldBadge) oldBadge.remove();
+
   const n = App.diasSel.size;
-  if (n > 1) {
-    if (!badge) {
-      badge = document.createElement('span');
-      badge.id = 'fab-badge';
-      fab.appendChild(badge);
-    }
-    badge.textContent = n;
-  } else {
-    if (badge) badge.remove();
+  const label = document.getElementById('fab-label');
+  if (label) {
+    label.textContent = n > 1 ? `Registrar (${n} dias)` : 'Registrar';
   }
 }
 
