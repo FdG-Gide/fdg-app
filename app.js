@@ -15,7 +15,8 @@ const App = {
   mes:     new Date().getMonth() + 1,
   ano:     new Date().getFullYear(),
   dados:   null,   // { alocacoes, registros, diasFerias, encontros }
-  diaSel:  null,   // data string 'yyyy-MM-dd' selecionada
+  diaSel:  null,   // data string 'yyyy-MM-dd' selecionada (último clicado)
+  diasSel: new Set(), // todos os dias selecionados (multi)
   corMap:  {},     // idAlocacao -> cor (0-4)
   regEdit: null,   // registro em edição
   tab:     'agenda'
@@ -229,7 +230,7 @@ function navMes(dir) {
   App.mes += dir;
   if (App.mes > 12) { App.mes = 1; App.ano++; }
   if (App.mes < 1)  { App.mes = 12; App.ano--; }
-  App.dados = null; App.diaSel = null;
+  App.dados = null; App.diaSel = null; App.diasSel = new Set();
   atualizarLabels();
   if (App.tab === 'agenda') {
     carregarMes().then(function(d) { if (d) renderAgenda(); });
@@ -271,6 +272,9 @@ function atribuirCores() {
 
 async function mudarTab(tab) {
   App.tab = tab;
+  App.diasSel = new Set();
+  App.diaSel  = null;
+  atualizarFabBadge();
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativo'));
   document.getElementById('tab-' + tab).classList.add('ativo');
   document.getElementById('fab').className = tab === 'agenda' ? '' : 'oculto';
@@ -452,28 +456,64 @@ function renderCalendario() {
   }
 }
 
-function selecionarDia(dStr) {
-  App.diaSel = dStr;
-  // Atualiza classe sel no grid
-  document.querySelectorAll('#cal-grid .cel').forEach(cel => cel.classList.remove('sel'));
-  if (dStr) {
-    // Marca célula selecionada
-    const grid = document.getElementById('cal-grid');
-    if (grid) {
-      const mes = App.mes; const ano = App.ano;
-      const prim = new Date(ano, mes - 1, 1);
-      let idx = 1 - prim.getDay();
-      const cels = grid.querySelectorAll('.cel');
-      cels.forEach(cel => {
-        const num = parseInt(cel.querySelector('.num')?.textContent);
-        if (!isNaN(num)) {
-          const dt = dataStr(new Date(ano, mes - 1, num));
-          if (dt === dStr) cel.classList.add('sel');
-        }
-      });
+function atualizarFabBadge() {
+  const fab = document.getElementById('fab');
+  if (!fab) return;
+  let badge = document.getElementById('fab-badge');
+  const n = App.diasSel.size;
+  if (n > 1) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = 'fab-badge';
+      fab.appendChild(badge);
     }
+    badge.textContent = n;
+  } else {
+    if (badge) badge.remove();
   }
-  renderEventosDia(dStr);
+}
+
+function selecionarDia(dStr) {
+  if (dStr === null) {
+    // Inicialização — sem dia selecionado
+    App.diaSel = null;
+    App.diasSel = new Set();
+    atualizarFabBadge();
+    atualizarCelsSel();
+    renderEventosDia(null);
+    return;
+  }
+
+  // Toggle: se já está selecionado, deseleciona; senão adiciona
+  if (App.diasSel.has(dStr)) {
+    App.diasSel.delete(dStr);
+    // diaSel aponta para o mais recente ainda selecionado
+    App.diaSel = App.diasSel.size > 0 ? [...App.diasSel].at(-1) : null;
+  } else {
+    App.diasSel.add(dStr);
+    App.diaSel = dStr;
+  }
+
+  atualizarFabBadge();
+  atualizarCelsSel();
+  // Painel inferior mostra o dia clicado (ou o último selecionado)
+  renderEventosDia(App.diaSel);
+}
+
+function atualizarCelsSel() {
+  const grid = document.getElementById('cal-grid');
+  if (!grid) return;
+  const mes = App.mes; const ano = App.ano;
+  grid.querySelectorAll('.cel').forEach(cel => {
+    cel.classList.remove('sel', 'sel-multi');
+    const num = parseInt(cel.querySelector('.num')?.textContent);
+    if (!isNaN(num) && num > 0) {
+      const dStr = dataStr(new Date(ano, mes - 1, num));
+      if (App.diasSel.has(dStr)) {
+        cel.classList.add(App.diasSel.size > 1 ? 'sel-multi' : 'sel');
+      }
+    }
+  });
 }
 
 function renderEventosDia(dStr) {
@@ -567,40 +607,47 @@ function renderEventosDia(dStr) {
 // ---- FAB / MODAL REGISTRO ----
 
 function abrirModalRegistro() {
-  const dStr = App.diaSel || dataStr(new Date());
+  const dias = App.diasSel.size > 0 ? [...App.diasSel].sort() : [dataStr(new Date())];
   const alocacoes = App.dados?.alocacoes || [];
+  const feriasSet = new Set((App.dados.diasFerias || []).map(f => f.data));
 
   if (!alocacoes.length) { toast('Sem projetos alocados neste mês.', 'erro'); return; }
-  if (!mesAindaEditavel(dStr)) { toast('Prazo de edição expirado para este mês.', 'erro'); return; }
 
-  const feriasSet = new Set((App.dados.diasFerias || []).map(f => f.data));
-  if (feriasSet.has(dStr)) { toast('Este dia está marcado como férias.', 'erro'); return; }
+  // Valida que ao menos 1 dia é elegível
+  const diasElegiveis = dias.filter(d =>
+    mesAindaEditavel(d) && !feriasSet.has(d)
+  );
+  if (!diasElegiveis.length) { toast('Nenhum dia selecionado permite registro.', 'erro'); return; }
 
-  // Monta opções de projeto
-  const opts = alocacoes.map(a =>
-    `<option value="${esc(a.id)}">${esc(a.nomeProjeto)}</option>`).join('');
-
-  // Horas disponíveis no dia considerando encontros presenciais
-  const horasEnc = (App.dados.encontros || [])
-    .filter(e => e.data === dStr && e.tipo === 'presencial')
-    .reduce((s, e) => s + e.horas, 0);
-  const horasJaReg = (App.dados.registros || [])
-    .filter(r => r.data === dStr)
-    .reduce((s, r) => s + r.horas, 0);
-  const disponivel = 8 - horasEnc - horasJaReg;
-
-  if (disponivel <= 0) { toast('Sem horas disponíveis neste dia.', 'erro'); return; }
-
-  // Opções de horas baseado no que resta e no papel
+  // Horas: usa o máximo disponível entre os dias elegíveis
   const isDiretor = App.user.papel === 'Diretor(a)' || App.user.nivel === 'Diretora Técnica';
+  const maxDisponivel = Math.max(...diasElegiveis.map(d => {
+    const horasEnc = (App.dados.encontros || [])
+      .filter(e => e.data === d && e.tipo === 'presencial')
+      .reduce((s, e) => s + e.horas, 0);
+    const horasJaReg = (App.dados.registros || [])
+      .filter(r => r.data === d)
+      .reduce((s, r) => s + r.horas, 0);
+    return Math.max(0, 8 - horasEnc - horasJaReg);
+  }));
+
+  if (maxDisponivel <= 0) { toast('Sem horas disponíveis nos dias selecionados.', 'erro'); return; }
+
   const horasOpts = [8, 4, 2, 1]
-    .filter(h => h <= disponivel && (isDiretor || h >= 4))
+    .filter(h => h <= maxDisponivel && (isDiretor || h >= 4))
     .map(h => `<option value="${h}">${h} hora${h > 1 ? 's' : ''}</option>`)
     .join('');
 
-  if (!horasOpts) { toast('Sem horas disponíveis neste dia.', 'erro'); return; }
+  if (!horasOpts) { toast('Sem horas disponíveis nos dias selecionados.', 'erro'); return; }
 
-  document.getElementById('modal-titulo').textContent = 'Registrar — ' + fmtDataBr(dStr);
+  const opts = alocacoes.map(a =>
+    `<option value="${esc(a.id)}">${esc(a.nomeProjeto)}</option>`).join('');
+
+  const titulo = dias.length === 1
+    ? 'Registrar — ' + fmtDataBr(dias[0])
+    : `Registrar — ${diasElegiveis.length} dia${diasElegiveis.length > 1 ? 's' : ''}`;
+
+  document.getElementById('modal-titulo').textContent = titulo;
   document.getElementById('modal-corpo').innerHTML = `
     <div class="campo">
       <label>Projeto</label>
@@ -619,7 +666,7 @@ function abrirModalRegistro() {
       <input type="hidden" id="m-modo" value="Presencial">
     </div>
     <div class="modal-erro" id="m-erro"></div>
-    <button class="btn-confirmar" onclick="confirmarRegistro('${dStr}')">Registrar</button>`;
+    <button class="btn-confirmar" onclick="confirmarRegistro()">Registrar</button>`;
   document.getElementById('modal-overlay').classList.remove('oculto');
 }
 
@@ -629,31 +676,115 @@ function setModo(modo) {
   document.getElementById('btn-remoto').className     = 'btn-modo' + (modo === 'Remoto'     ? ' ativo' : '');
 }
 
-async function confirmarRegistro(dStr) {
-  const idAloc = document.getElementById('m-projeto').value;
-  const horas  = parseInt(document.getElementById('m-horas').value);
-  const modo   = document.getElementById('m-modo').value;
-  const erroEl = document.getElementById('m-erro');
-  const btn    = document.querySelector('#modal-corpo .btn-confirmar');
+async function confirmarRegistro() {
+  const idAloc  = document.getElementById('m-projeto').value;
+  const horasSol = parseInt(document.getElementById('m-horas').value);
+  const modo    = document.getElementById('m-modo').value;
+  const erroEl  = document.getElementById('m-erro');
+  const btn     = document.querySelector('#modal-corpo .btn-confirmar');
+  const feriasSet = new Set((App.dados.diasFerias || []).map(f => f.data));
 
   erroEl.textContent = '';
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-btn"></span> Salvando…';
 
+  const dias = App.diasSel.size > 0 ? [...App.diasSel].sort() : [App.diaSel || dataStr(new Date())];
+
+  // Monta payload ajustando horas disponíveis por dia
+  const payload = [];
+  const resumo  = { ok: [], parcial: [], pulado: [] };
+
+  for (const d of dias) {
+    if (!mesAindaEditavel(d) || feriasSet.has(d)) {
+      resumo.pulado.push({ d, motivo: feriasSet.has(d) ? 'dia de férias' : 'prazo expirado' });
+      continue;
+    }
+    const horasEnc = (App.dados.encontros || [])
+      .filter(e => e.data === d && e.tipo === 'presencial')
+      .reduce((s, e) => s + e.horas, 0);
+    const horasJaReg = (App.dados.registros || [])
+      .filter(r => r.data === d)
+      .reduce((s, r) => s + r.horas, 0);
+    const disponivel = 8 - horasEnc - horasJaReg;
+
+    if (disponivel <= 0) {
+      resumo.pulado.push({ d, motivo: 'já tem 8h cadastradas' });
+      continue;
+    }
+    const horasReal = Math.min(horasSol, disponivel);
+    payload.push({ idAlocacao: idAloc, data: d, horas: horasReal, modo });
+    if (horasReal < horasSol) {
+      resumo.parcial.push({ d, horasReal, disponivel });
+    } else {
+      resumo.ok.push(d);
+    }
+  }
+
+  if (!payload.length) {
+    erroEl.textContent = 'Nenhum dia disponível para registrar.';
+    btn.disabled = false;
+    btn.innerHTML = 'Registrar';
+    return;
+  }
+
   try {
-    await api('registros/salvar', { body: { payload: JSON.stringify([{ idAlocacao: idAloc, data: dStr, horas, modo }]) } });
+    await api('registros/salvar', { body: { payload: JSON.stringify(payload) } });
     fecharModal();
-    App.dados = null; // invalida cache
+    App.dados = null;
+    App.diasSel = new Set();
+    App.diaSel  = null;
+    atualizarFabBadge();
     const d = await carregarMes();
     if (d) renderAgenda();
-    toast('Registro salvo!', 'ok');
-    // Re-seleciona o dia
-    setTimeout(() => selecionarDia(dStr), 100);
+
+    // Exibe resumo se houver dias pulados ou parciais
+    const totalDias = dias.length;
+    if (totalDias === 1) {
+      toast('Registro salvo!', 'ok');
+      setTimeout(() => selecionarDia(payload[0].data), 100);
+    } else {
+      exibirResumoLote(resumo, payload);
+    }
   } catch (e) {
     erroEl.textContent = e.message;
     btn.disabled = false;
     btn.innerHTML = 'Registrar';
   }
+}
+
+function exibirResumoLote(resumo, payload) {
+  // Monta modal de resumo
+  document.getElementById('modal-titulo').textContent = 'Resumo do registro';
+  let html = '<div class="lote-resumo">';
+
+  if (resumo.ok.length) {
+    html += `<div class="lote-resumo-item">
+      <span class="lote-icone">✅</span>
+      <div class="lote-texto">${resumo.ok.length} dia${resumo.ok.length > 1 ? 's' : ''} registrado${resumo.ok.length > 1 ? 's' : ''} com sucesso</div>
+    </div>`;
+  }
+  resumo.parcial.forEach(({ d, horasReal, disponivel }) => {
+    html += `<div class="lote-resumo-item">
+      <span class="lote-icone">⚠️</span>
+      <div class="lote-texto">
+        <strong>${fmtDiaMes(d)}</strong> — registrado ${horasReal}h
+        <div class="lote-motivo">só havia ${disponivel}h disponível${disponivel > 1 ? 'is' : ''} neste dia</div>
+      </div>
+    </div>`;
+  });
+  resumo.pulado.forEach(({ d, motivo }) => {
+    html += `<div class="lote-resumo-item">
+      <span class="lote-icone">❌</span>
+      <div class="lote-texto">
+        <strong>${fmtDiaMes(d)}</strong> — não registrado
+        <div class="lote-motivo">${motivo}</div>
+      </div>
+    </div>`;
+  });
+
+  html += '</div><button class="btn-confirmar" style="margin-top:16px" onclick="fecharModal()">OK</button>';
+  document.getElementById('modal-corpo').innerHTML = html;
+  document.getElementById('modal-overlay').classList.remove('oculto');
 }
 
 // ---- MODAL EDITAR ----
