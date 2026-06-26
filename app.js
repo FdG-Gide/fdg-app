@@ -1,5 +1,6 @@
 // ============================================================
 // FdG PWA — app.js
+// https://script.google.com/macros/s/AKfycbxml5mv2iK8RGKQh6D6VX2HpzKSeAmV_OCfM5MNRZo/dev
 // ============================================================
 
 // ---- CONFIGURAÇÃO ----
@@ -39,21 +40,19 @@ function api(path, opts = {}) {
   url.searchParams.set('path', path);
   if (App.token) url.searchParams.set('token', App.token);
 
-  const isGet = !opts.body;
-  if (isGet && opts.params) {
+  // GAS não suporta CORS em POST com Content-Type: application/json.
+  // Solução: tudo como GET com parâmetros na URL (HTTPS protege o tráfego).
+  // Para operações com "body", serializa os campos como query params.
+  if (opts.params) {
     Object.entries(opts.params).forEach(([k, v]) => url.searchParams.set(k, v));
   }
-
-  const fetchOpts = {
-    method:  isGet ? 'GET' : 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  };
   if (opts.body) {
-    url.searchParams.set('path', path);
-    fetchOpts.body = JSON.stringify(opts.body);
+    Object.entries(opts.body).forEach(([k, v]) => {
+      url.searchParams.set(k, typeof v === 'object' ? JSON.stringify(v) : v);
+    });
   }
 
-  return fetch(url.toString(), fetchOpts)
+  return fetch(url.toString(), { redirect: 'follow' })
     .then(r => r.json())
     .then(r => { if (!r.ok) throw new Error(r.error || 'Erro desconhecido'); return r.data; });
 }
@@ -585,7 +584,7 @@ async function confirmarRegistro(dStr) {
   btn.innerHTML = '<span class="spinner-btn"></span> Salvando…';
 
   try {
-    await api('registros/salvar', { body: { payload: [{ idAlocacao: idAloc, data: dStr, horas, modo }] } });
+    await api('registros/salvar', { body: { payload: JSON.stringify([{ idAlocacao: idAloc, data: dStr, horas, modo }]) } });
     fecharModal();
     App.dados = null; // invalida cache
     const d = await carregarMes();
