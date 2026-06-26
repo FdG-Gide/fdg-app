@@ -832,21 +832,38 @@ function getFeriadosBR(ano) {
 window.addEventListener('DOMContentLoaded', () => {
   // Service Worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+
+  // Carrega logo de login via API (sem autenticação)
+  carregarLogoLogin();
 
   // Verifica sessão salva
   carregarSessao();
 
   if (App.token && App.user) {
-    // Valida o token ainda é válido
     api('me').then(() => iniciarApp()).catch(() => { limparSessao(); renderLogin(); });
   } else {
     renderLogin();
   }
 
-  // Enter no campo senha faz login
   document.getElementById('senha').addEventListener('keydown', e => {
     if (e.key === 'Enter') fazerLogin();
   });
 });
+
+function carregarLogoLogin() {
+  api('logo').then(function(res) {
+    if (res && res.src) {
+      const img = document.getElementById('logo-login-img');
+      const svg = document.getElementById('logo-login-svg');
+      if (img && svg) {
+        img.src = res.src;
+        img.style.display = 'block';
+        svg.style.display = 'none';
+      }
+    }
+  }).catch(function() {
+    // Silencioso — o SVG fallback já está visível
+  });
+}
