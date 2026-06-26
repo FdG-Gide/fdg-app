@@ -82,25 +82,31 @@ function fmtDiaMes(s) {
 }
 
 function mesAindaEditavel(dateStr) {
-  if (App.user && (App.user.papel === 'Diretor(a)' || App.user.nivel === 'Diretora Técnica')) return true;
-  const dt    = parseDateLocal(dateStr);
-  const hoje  = new Date();
+  const dt       = parseDateLocal(dateStr);
+  const hoje     = new Date();
   const anoAtual = hoje.getFullYear();
   const mesAtual = hoje.getMonth() + 1;
-  const diaAtual = hoje.getDate();
+  const diaHoje  = hoje.getDate();
 
-  // Mês futuro — nunca pode cadastrar
-  if (dt.getFullYear() > anoAtual || (dt.getFullYear() === anoAtual && dt.getMonth() + 1 > mesAtual)) return false;
+  const anoData  = dt.getFullYear();
+  const mesData  = dt.getMonth() + 1;
 
-  // Mês atual — pode sempre
-  if (dt.getFullYear() === anoAtual && dt.getMonth() + 1 === mesAtual) return true;
+  // Mês futuro — nunca pode, nem Diretor
+  if (anoData > anoAtual || (anoData === anoAtual && mesData > mesAtual)) return false;
 
-  // Mês anterior — só pode se ainda estiver nos primeiros DIA_LIMITE_EDICAO dias do mês atual
-  // E apenas o mês imediatamente anterior
+  // Mês atual — sempre pode
+  if (anoData === anoAtual && mesData === mesAtual) return true;
+
+  // Mês anterior ou mais antigo — verifica prazo
   const mesAnterior = mesAtual === 1 ? 12 : mesAtual - 1;
   const anoAnterior = mesAtual === 1 ? anoAtual - 1 : anoAtual;
-  const ehMesAnterior = dt.getFullYear() === anoAnterior && dt.getMonth() + 1 === mesAnterior;
-  if (ehMesAnterior && diaAtual <= DIA_LIMITE_EDICAO) return true;
+  const ehMesImediato = anoData === anoAnterior && mesData === mesAnterior;
+
+  // Só o mês imediatamente anterior, e só se ainda estiver dentro do prazo
+  if (ehMesImediato && diaHoje <= DIA_LIMITE_EDICAO) {
+    // Diretores têm prazo ampliado? Por ora, mesma regra para todos
+    return true;
+  }
 
   return false;
 }
@@ -1107,5 +1113,6 @@ function carregarLogoLogin() {
     // Silencioso — o SVG fallback já está visível
   });
 }
+
 
 
