@@ -54,10 +54,10 @@ body {
   background: var(--bg-card);
   border-top: 0.5px solid var(--borda);
   display: flex;
-  align-items: flex-start;
-  padding-top: 0;
+  align-items: center;
   padding-bottom: env(safe-area-inset-bottom);
-  height: calc(var(--tabbar) + env(safe-area-inset-bottom));
+  /* Altura fixa visível + espaço da safe area embaixo */
+  min-height: calc(var(--tabbar) + env(safe-area-inset-bottom));
 }
 .tab {
   flex: 1;
@@ -70,7 +70,9 @@ body {
   border: none;
   background: none;
   padding: 0;
+  /* Altura fixa exata da área visível da tabbar */
   height: var(--tabbar);
+  align-self: flex-start;
 }
 .tab svg { width: 26px; height: 26px; stroke: var(--muted); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s; }
 .tab span { font-size: 11px; color: var(--muted); transition: color .15s; }
@@ -354,4 +356,3 @@ body {
 img, svg { max-width: 100%; height: auto; }
 .cards-scroll { padding-right: 16px; }
 .ev-nome, .reg-nome, .proj-card .nome { max-width: 55vw; }
-
