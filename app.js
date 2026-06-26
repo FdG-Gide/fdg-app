@@ -91,11 +91,9 @@ function mesAindaEditavel(dateStr) {
   const anoData  = dt.getFullYear();
   const mesData  = dt.getMonth() + 1;
 
-  // Mês futuro — nunca pode, nem Diretor
-  if (anoData > anoAtual || (anoData === anoAtual && mesData > mesAtual)) return false;
-
+  // Mês futuro — pode cadastrar
   // Mês atual — sempre pode
-  if (anoData === anoAtual && mesData === mesAtual) return true;
+  if (anoData > anoAtual || (anoData === anoAtual && mesData >= mesAtual)) return true;
 
   // Mês anterior ou mais antigo — verifica prazo
   const mesAnterior = mesAtual === 1 ? 12 : mesAtual - 1;
@@ -658,7 +656,11 @@ function renderEventosDia(dStr) {
 // ---- FAB / MODAL REGISTRO ----
 
 function abrirModalRegistro() {
-  const dias = App.diasSel.size > 0 ? [...App.diasSel].sort() : [dataStr(new Date())];
+  if (App.diasSel.size === 0) {
+    toast('Selecione ao menos um dia no calendário antes de registrar.', 'erro');
+    return;
+  }
+  const dias = [...App.diasSel].sort();
   const alocacoes = App.dados?.alocacoes || [];
   const feriasSet = new Set((App.dados.diasFerias || []).map(f => f.data));
 
