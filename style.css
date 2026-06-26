@@ -69,9 +69,11 @@ body {
   cursor: pointer;
   border: none;
   background: none;
-  padding-bottom: 2px;
+  padding: 0;
   /* Área de toque mínima de 44px */
   min-height: 44px;
+  /* Compensa o padding-bottom da safe area para centralizar visualmente */
+  margin-bottom: env(safe-area-inset-bottom);
 }
 .tab svg { width: 26px; height: 26px; stroke: var(--muted); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s; }
 .tab span { font-size: 11px; color: var(--muted); transition: color .15s; }
@@ -172,7 +174,36 @@ body {
 }
 
 
-/* ---- Calendário ---- */
+/* ---- Seleção múltipla de dias ---- */
+.cel.sel-multi { background: rgba(23,78,122,.13); }
+.cel.sel-multi .num { background: rgba(23,78,122,.22); color: var(--azul); font-weight: 700; border-radius: 50%; }
+.cel.hoje.sel-multi .num { background: var(--azul); color: #fff; }
+#fab-badge {
+  position: absolute;
+  top: -4px; right: -4px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  pointer-events: none;
+}
+#fab { position: relative; }
+
+/* Resumo de cadastro em lote */
+.lote-resumo { padding: 12px 0 4px; }
+.lote-resumo-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; padding: 5px 0; border-bottom: 0.5px solid var(--borda); }
+.lote-resumo-item:last-child { border-bottom: none; }
+.lote-resumo-item .lote-icone { font-size: 15px; flex-shrink: 0; }
+.lote-resumo-item .lote-texto { color: var(--texto); line-height: 1.4; }
+.lote-resumo-item .lote-motivo { color: var(--muted); font-size: 12px; }
+
 #cal-wrap { background: var(--bg-card); }
 .cal-head { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 10px 4px; }
 .cal-head span { text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
