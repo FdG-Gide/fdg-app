@@ -1,0 +1,14 @@
+{
+  "name": "FdG Alocação",
+  "short_name": "FdG",
+  "description": "Agenda e registro de horas — FdG Consultores",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#174e7a",
+  "theme_color": "#174e7a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
