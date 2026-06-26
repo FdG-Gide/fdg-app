@@ -646,10 +646,13 @@ function abrirModalRegistro() {
 
   if (!alocacoes.length) { toast('Sem projetos alocados neste mês.', 'erro'); return; }
 
-  // Valida que ao menos 1 dia é elegível
-  const diasElegiveis = dias.filter(d =>
-    mesAindaEditavel(d) && !feriasSet.has(d)
-  );
+  const feriados = getFeriadosBR(new Date().getFullYear());
+  const diasElegiveis = dias.filter(d => {
+    const dt = parseDateLocal(d);
+    const dow = dt.getDay();
+    const mmdd = d.substring(5);
+    return mesAindaEditavel(d) && !feriasSet.has(d) && dow !== 0 && dow !== 6 && !feriados[mmdd];
+  });
   if (!diasElegiveis.length) { toast('Nenhum dia selecionado permite registro.', 'erro'); return; }
 
   // Horas: usa o máximo disponível entre os dias elegíveis
@@ -727,7 +730,20 @@ async function confirmarRegistro() {
   const payload = [];
   const resumo  = { ok: [], parcial: [], pulado: [] };
 
+  const feriados = getFeriadosBR(new Date().getFullYear());
+
   for (const d of dias) {
+    const dt  = parseDateLocal(d);
+    const dow = dt.getDay();
+    const mmdd = d.substring(5);
+    if (dow === 0 || dow === 6) {
+      resumo.pulado.push({ d, motivo: 'fim de semana' });
+      continue;
+    }
+    if (feriados[mmdd]) {
+      resumo.pulado.push({ d, motivo: `feriado: ${feriados[mmdd]}` });
+      continue;
+    }
     if (!mesAindaEditavel(d) || feriasSet.has(d)) {
       resumo.pulado.push({ d, motivo: feriasSet.has(d) ? 'dia de férias' : 'prazo expirado' });
       continue;
@@ -910,6 +926,7 @@ function renderRegistros() {
 
   const todos = [
     ...(App.dados.registros  || []).map(r => ({ tipo: 'reg', ...r })),
+    ...(App.dados.encontros  || []).map(e => ({ tipo: 'encontro', ...e })),
     ...(App.dados.diasFerias || []).map(f => ({ tipo: 'ferias', data: f.data, obs: f.observacao }))
   ].sort((a, b) => a.data.localeCompare(b.data));
 
@@ -932,6 +949,19 @@ function renderRegistros() {
           <div class="reg-nome">🏝️ Férias</div>
           <div class="reg-sub">${esc(item.obs || 'Cadastrado pelo Admin')}</div>
         </div>`;
+    } else if (item.tipo === 'encontro') {
+      const icone = item.tipo_enc === 'presencial' || item.tipo === 'presencial' ? '✈️' : '💻';
+      const tipoLabel = (item.tipo_enc || item.tipoEncontro || item.tipo) === 'presencial' ? 'Encontro Presencial' : 'Encontro Online';
+      const corFundo  = (item.tipo_enc || item.tipoEncontro || item.tipo) === 'presencial' ? 'rgba(23,78,122,.1)' : 'rgba(67,221,133,.18)';
+      const corTexto  = (item.tipo_enc || item.tipoEncontro || item.tipo) === 'presencial' ? '#174e7a' : '#0d5c36';
+      el.className = 'reg-item';
+      el.innerHTML = `
+        <div class="reg-data"><span class="dia-num">${diaNum}</span>${diaAbr}</div>
+        <div class="reg-info">
+          <div class="reg-nome">${icone} ${tipoLabel}</div>
+          <div class="reg-sub">Cadastrado pelo Admin</div>
+        </div>
+        ${item.horas ? `<span class="reg-badge" style="background:${corFundo};color:${corTexto}">${item.horas}h</span>` : ''}`;
     } else {
       const c = CORES[App.corMap[item.idAlocacao] || 0];
       const icone = item.modo === 'Remoto' ? '🏠' : '✈️';
@@ -1066,4 +1096,5 @@ function carregarLogoLogin() {
     // Silencioso — o SVG fallback já está visível
   });
 }
+
 
