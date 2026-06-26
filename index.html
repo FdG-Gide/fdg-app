@@ -77,6 +77,14 @@
     </div>
   </div>
 
+  <!-- Barra de ação acima do calendário (só visível na aba agenda) -->
+  <div id="cal-action-bar" class="oculto">
+    <span id="cal-action-hint">Selecione o(s) dia(s) e clique em +</span>
+    <button id="fab" onclick="abrirModalRegistro()" aria-label="Registrar dia">
+      + <span id="fab-label">Registrar</span>
+    </button>
+  </div>
+
   <!-- Conteúdo principal -->
   <div id="main"></div>
 
@@ -96,9 +104,6 @@
     </button>
   </div>
 </div>
-
-<!-- Botão flutuante de registrar (oculto por padrão) -->
-<button id="fab" class="oculto" onclick="abrirModalRegistro()" aria-label="Registrar dia">+</button>
 
 <!-- Modal de registro / edição -->
 <div class="modal-overlay oculto" id="modal-overlay" onclick="if(event.target===this)fecharModal()">
