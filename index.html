@@ -19,16 +19,21 @@
 <!-- ===== TELA DE LOGIN ===== -->
 <div id="tela-login">
   <div class="login-card">
-    <!-- Logo FdG (mesmo SVG do sistema) -->
-    <svg class="login-logo" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" aria-label="FdG Fundação da Gide">
-      <rect x="4"  y="4"  width="20" height="20" fill="#ffe45f" rx="2"/>
-      <polygon points="14,30 4,50 24,50" fill="#76d5ff"/>
-      <circle cx="36" cy="38" r="12" fill="#43dd85"/>
-      <polygon points="36,8 50,22 36,36 22,22" fill="#174e7a"/>
-      <text x="62" y="38" font-family="Affect, Montserrat, sans-serif" font-weight="700" font-size="28" fill="#174e7a" letter-spacing="-0.5">FdG</text>
-      <text x="108" y="28" font-family="Inter, sans-serif" font-weight="400" font-size="8.5" fill="#174e7a">Fundação</text>
-      <text x="108" y="39" font-family="Inter, sans-serif" font-weight="900" font-size="8.5" fill="#174e7a">da Gide</text>
-    </svg>
+    <!-- Logo FdG — carregado via API do GAS -->
+    <div id="logo-login-wrap" style="text-align:center;margin-bottom:24px;min-height:56px">
+      <img id="logo-login-img" src="" alt="FdG Fundação da Gide"
+           style="max-width:180px;max-height:56px;object-fit:contain;display:none">
+      <!-- SVG fallback enquanto carrega -->
+      <svg id="logo-login-svg" class="login-logo" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4"  y="4"  width="20" height="20" fill="#ffe45f" rx="2"/>
+        <polygon points="14,30 4,50 24,50" fill="#76d5ff"/>
+        <circle cx="36" cy="38" r="12" fill="#43dd85"/>
+        <polygon points="36,8 50,22 36,36 22,22" fill="#174e7a"/>
+        <text x="62" y="38" font-family="Arial Black,sans-serif" font-weight="900" font-size="28" fill="#174e7a">FdG</text>
+        <text x="108" y="28" font-family="Arial,sans-serif" font-weight="400" font-size="8.5" fill="#174e7a">Fundação</text>
+        <text x="108" y="39" font-family="Arial,sans-serif" font-weight="900" font-size="8.5" fill="#174e7a">da Gide</text>
+      </svg>
+    </div>
 
     <h1 class="login-titulo">Alocação em Projetos</h1>
     <p class="login-sub">Acesse com seu e-mail e senha cadastrados</p>
@@ -92,8 +97,8 @@
   </div>
 </div>
 
-<!-- Botão flutuante de registrar -->
-<button id="fab" onclick="abrirModalRegistro()" aria-label="Registrar dia">+</button>
+<!-- Botão flutuante de registrar (oculto por padrão) -->
+<button id="fab" class="oculto" onclick="abrirModalRegistro()" aria-label="Registrar dia">+</button>
 
 <!-- Modal de registro / edição -->
 <div class="modal-overlay oculto" id="modal-overlay" onclick="if(event.target===this)fecharModal()">
@@ -110,4 +115,3 @@
 <script src="app.js"></script>
 </body>
 </html>
-
