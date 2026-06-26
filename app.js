@@ -1,6 +1,6 @@
 // ============================================================
 // FdG PWA — app.js
-// https://script.google.com/macros/s/AKfycbxml5mv2iK8RGKQh6D6VX2HpzKSeAmV_OCfM5MNRZo/dev
+// https://script.google.com/macros/s/AKfycby0U2F1mBS7SogjsHvAcvFwHZD2Ni3Nl8Hw_NIoVw0VStgwDqQ50YvKAj8MYjclfkgH/exec
 // ============================================================
 
 // ---- CONFIGURAÇÃO ----
