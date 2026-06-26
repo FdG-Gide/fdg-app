@@ -83,9 +83,26 @@ function fmtDiaMes(s) {
 
 function mesAindaEditavel(dateStr) {
   if (App.user && (App.user.papel === 'Diretor(a)' || App.user.nivel === 'Diretora Técnica')) return true;
-  const dt     = parseDateLocal(dateStr);
-  const limite = new Date(dt.getFullYear(), dt.getMonth() + 1, DIA_LIMITE_EDICAO, 23, 59, 59);
-  return new Date() <= limite;
+  const dt    = parseDateLocal(dateStr);
+  const hoje  = new Date();
+  const anoAtual = hoje.getFullYear();
+  const mesAtual = hoje.getMonth() + 1;
+  const diaAtual = hoje.getDate();
+
+  // Mês futuro — nunca pode cadastrar
+  if (dt.getFullYear() > anoAtual || (dt.getFullYear() === anoAtual && dt.getMonth() + 1 > mesAtual)) return false;
+
+  // Mês atual — pode sempre
+  if (dt.getFullYear() === anoAtual && dt.getMonth() + 1 === mesAtual) return true;
+
+  // Mês anterior — só pode se ainda estiver nos primeiros DIA_LIMITE_EDICAO dias do mês atual
+  // E apenas o mês imediatamente anterior
+  const mesAnterior = mesAtual === 1 ? 12 : mesAtual - 1;
+  const anoAnterior = mesAtual === 1 ? anoAtual - 1 : anoAtual;
+  const ehMesAnterior = dt.getFullYear() === anoAnterior && dt.getMonth() + 1 === mesAnterior;
+  if (ehMesAnterior && diaAtual <= DIA_LIMITE_EDICAO) return true;
+
+  return false;
 }
 
 let toastTimer;
@@ -396,7 +413,8 @@ function renderCalendario() {
       const fds    = dow === 0 || dow === 6;
       const ferias = !outro && feriasSet.has(dStr);
       const feriado = !outro && !ferias && !!feriados[mmdd];
-      const foraPrazo = !outro && !ferias && mesAindaEditavel(dStr) === false;
+      const foraPrazo = !outro && !fds && !feriado && !ferias && !mesAindaEditavel(dStr);
+      const bloqueado = outro || fds || feriado || ferias || foraPrazo;
       const ehHoje = !outro && diaAtual === hoje.getDate() &&
                     mes === hoje.getMonth() + 1 && ano === hoje.getFullYear();
       const sel    = App.diaSel === dStr && !outro;
@@ -404,6 +422,7 @@ function renderCalendario() {
       if (outro) cel.classList.add('outro');
       if (fds)   cel.classList.add('fds');
       if (ferias) cel.classList.add('ferias');
+      if (feriado) cel.classList.add('feriado');
       if (foraPrazo) cel.classList.add('fora-prazo');
       if (ehHoje) cel.classList.add('hoje');
       if (sel)   cel.classList.add('sel');
@@ -417,6 +436,13 @@ function renderCalendario() {
         const lb = document.createElement('div');
         lb.className = 'ferias-cel-label';
         lb.textContent = '🏝️';
+        cel.appendChild(lb);
+      }
+      if (feriado) {
+        const lb = document.createElement('div');
+        lb.className = 'ferias-cel-label';
+        lb.textContent = '🎉';
+        cel.title = feriados[mmdd];
         cel.appendChild(lb);
       }
 
@@ -443,11 +469,18 @@ function renderCalendario() {
         }
       }
 
-      // Clique
-      if (!outro && !ferias && !foraPrazo) {
+      // Clique — só dias úteis não bloqueados permitem seleção/registro
+      if (!outro && !bloqueado) {
         cel.addEventListener('click', () => selecionarDia(dStr));
       } else if (!outro && ferias) {
+        // Férias: permite ver o evento mas não registrar
         cel.addEventListener('click', () => selecionarDia(dStr));
+      } else if (!outro && (fds || feriado)) {
+        // FDS/Feriado: toque mostra toast explicativo
+        cel.addEventListener('click', () => {
+          const motivo = feriado ? `Feriado: ${feriados[dStr.substring(5)]}` : 'Fins de semana não permitem registro';
+          toast(motivo, 'erro');
+        });
       }
 
       grid.appendChild(cel);
@@ -1033,3 +1066,4 @@ function carregarLogoLogin() {
     // Silencioso — o SVG fallback já está visível
   });
 }
+
